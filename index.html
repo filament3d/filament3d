@@ -1,0 +1,1666 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>פילמנט 3D — ניהול עסק</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #E2DDD5;
+    --border2: #C9C4BB;
+    --text: #1A1814;
+    --text2: #6B6660;
+    --text3: #A09C97;
+    --green: #1D9E75;
+    --green-bg: #E8F7F2;
+    --green-text: #0F6E56;
+    --amber: #BA7517;
+    --amber-bg: #FEF3DC;
+    --amber-text: #7A4D0D;
+    --red: #C0392B;
+    --red-bg: #FDECEA;
+    --red-text: #7D1F17;
+    --blue: #2563EB;
+    --blue-bg: #EEF4FF;
+    --blue-text: #1A3F99;
+    --accent: #1D9E75;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* Layout */
+  .layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: var(--surface); border-left: 1px solid var(--border); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 2px; position: fixed; top: 0; right: 0; bottom: 0; z-index: 10; }
+  .main { margin-right: 220px; padding: 2rem; flex: 1; }
+
+  /* Sidebar */
+  .brand { padding: 0 0.5rem 1.5rem; }
+  .brand-name { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+  .brand-name span { color: var(--accent); }
+  .brand-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius); cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 400; transition: all 0.15s; border: none; background: none; width: 100%; text-align: right; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: #E8F7F2; color: var(--green-text); font-weight: 500; }
+  .nav-icon { width: 16px; text-align: center; flex-shrink: 0; }
+  .nav-section { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; padding: 1rem 0.5rem 0.3rem; }
+
+  /* Page */
+  .page { display: none; }
+  .page.active { display: block; }
+  .page-header { margin-bottom: 1.5rem; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+  .page-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .page-subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+  /* Metrics */
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+  .metric-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric-value { font-size: 26px; font-weight: 600; margin-top: 4px; letter-spacing: -1px; }
+  .metric-hint { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .metric-card.accent { border-color: var(--green); }
+  .metric-card.accent .metric-value { color: var(--green); }
+
+  /* Table */
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .table-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .table-title { font-size: 13px; font-weight: 600; flex: 1; }
+  .search-box { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 13px; font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); outline: none; width: 200px; }
+  .search-box:focus { border-color: var(--accent); }
+  .filter-select { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 12px; font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); outline: none; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  thead th { background: var(--bg); text-align: right; padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--bg); }
+  tbody tr { cursor: pointer; transition: background 0.1s; }
+  .empty-row td { text-align: center; padding: 3rem; color: var(--text3); font-size: 13px; cursor: default; }
+  .empty-row:hover td { background: none !important; }
+
+  /* Badges */
+  .badge { display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .badge-new { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-progress { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-done { background: var(--green-bg); color: var(--green-text); }
+  .badge-shipped { background: #F0EDF8; color: #4A2F8A; }
+  .badge-paid { background: var(--green-bg); color: var(--green-text); }
+  .badge-partial { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-unpaid { background: var(--red-bg); color: var(--red-text); }
+  .badge-low { background: var(--red-bg); color: var(--red-text); }
+  .badge-ok { background: var(--green-bg); color: var(--green-text); }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; font-family: 'Heebo', sans-serif; transition: all 0.15s; }
+  .btn:hover { background: var(--surface2); }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary:hover { background: #0F6E56; border-color: #0F6E56; }
+  .btn-danger { background: none; border-color: var(--red); color: var(--red); }
+  .btn-danger:hover { background: var(--red-bg); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,12,8,0.5); z-index: 100; display: none; align-items: flex-start; justify-content: center; padding: 3rem 1rem; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); width: 100%; max-width: 560px; overflow: hidden; }
+  .modal-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-close { width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--surface2); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text2); }
+  .modal-close:hover { background: var(--border); }
+  .modal-body { padding: 1.5rem; }
+  .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .modal-footer-right { display: flex; gap: 8px; }
+
+  /* Forms */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+  .form-input { border: 1px solid var(--border); border-radius: var(--radius); padding: 9px 12px; font-size: 13px; font-family: 'Heebo', sans-serif; background: var(--surface); color: var(--text); outline: none; transition: border 0.15s; }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text3); }
+  select.form-input { cursor: pointer; }
+  textarea.form-input { resize: vertical; min-height: 70px; }
+
+  /* Section divider in modal */
+  .form-section { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 1rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; grid-column: 1 / -1; }
+
+  /* Materials usage in order modal */
+  .materials-list { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; grid-column: 1 / -1; }
+  .materials-list-header { display: grid; grid-template-columns: 1fr 100px 80px 28px; gap: 8px; padding: 7px 10px; background: var(--bg); font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+  .material-row { display: grid; grid-template-columns: 1fr 100px 80px 28px; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); align-items: center; }
+  .material-row:last-child { border-bottom: none; }
+  .material-row select, .material-row input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; font-family: 'Heebo', sans-serif; background: var(--surface); color: var(--text); outline: none; width: 100%; }
+  .material-row select:focus, .material-row input:focus { border-color: var(--accent); }
+  .btn-remove-mat { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border); background: none; cursor: pointer; font-size: 14px; color: var(--text3); display: flex; align-items: center; justify-content: center; }
+  .btn-remove-mat:hover { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+  .btn-add-mat { font-size: 12px; color: var(--accent); background: none; border: none; cursor: pointer; font-family: 'Heebo', sans-serif; padding: 6px 10px; font-weight: 500; }
+  .btn-add-mat:hover { text-decoration: underline; }
+
+  /* Profit indicator */
+  .profit-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; }
+  .profit-row .label { color: var(--text2); }
+  .profit-row .val { font-weight: 500; }
+  .profit-row.total { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 10px; font-weight: 600; }
+  .profit-positive { color: var(--green); }
+  .profit-negative { color: var(--red); }
+
+  /* Deadline colors */
+  .dl-overdue { color: var(--red); font-weight: 500; }
+  .dl-soon { color: var(--amber); font-weight: 500; }
+
+  /* Dashboard quick table */
+  .dash-section { margin-bottom: 1.5rem; }
+  .dash-section-title { font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Inv progress bar */
+  .inv-bar-wrap { background: var(--surface2); border-radius: 4px; height: 6px; width: 80px; overflow: hidden; }
+  .inv-bar { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .inv-bar.ok { background: var(--green); }
+  .inv-bar.low { background: var(--red); }
+
+  /* ---- Password screen ---- */
+  #auth-screen { position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center; }
+  #auth-screen.hidden { display:none; }
+  .auth-box { background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem 2rem;width:320px;text-align:center; }
+  .auth-logo { font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-bottom:4px; }
+  .auth-logo span { color:var(--accent); }
+  .auth-sub { font-size:12px;color:var(--text3);margin-bottom:1.5rem; }
+  .auth-error { font-size:12px;color:var(--red);margin-top:8px;min-height:16px; }
+  .auth-input-wrap { position:relative; }
+  .auth-toggle { position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-right: 0; padding: 1rem; }
+    .metrics { grid-template-columns: 1fr 1fr; }
+  }
+  #page-stats [style*="grid-template-columns:1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  #page-stats [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">פילמנט <span>3D</span></div>
+    <div class="auth-sub">ניהול עסק — כניסה פרטית</div>
+    <div class="auth-input-wrap">
+      <input class="form-input" type="password" id="auth-input" placeholder="סיסמה" style="width:100%;text-align:right;padding-left:36px"
+        onkeydown="if(event.key==='Enter') checkAuth()">
+      <button class="auth-toggle" onclick="toggleAuthVis()" id="auth-vis-btn">👁</button>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:1rem;justify-content:center" onclick="checkAuth()">כניסה</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-name">פילמנט <span>3D</span></div>
+      <div class="brand-sub">ניהול עסק</div>
+      <div id="sync-status" style="margin-top:8px"></div>
+    </div>
+    <div class="nav-section">ראשי</div>
+    <button class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">◈</span> דשבורד</button>
+    <div class="nav-section">הזמנות</div>
+    <button class="nav-item" onclick="showPage('orders')"><span class="nav-icon">◻</span> כל ההזמנות</button>
+    <div class="nav-section">מלאי</div>
+    <button class="nav-item" onclick="showPage('inventory')"><span class="nav-icon">◫</span> חומרי גלם</button>
+    <div class="nav-section">כספים</div>
+    <button class="nav-item" onclick="showPage('expenses')"><span class="nav-icon">◑</span> הוצאות</button>
+    <div class="nav-section">ניתוח</div>
+    <button class="nav-item" onclick="showPage('stats')"><span class="nav-icon">◉</span> סטטיסטיקות</button>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div><div class="page-title">דשבורד</div><div class="page-subtitle" id="dash-date"></div></div>
+      </div>
+      <div class="metrics" id="dash-metrics"></div>
+      <div class="dash-section">
+        <div class="dash-section-title">הזמנות פעילות</div>
+        <div class="table-card">
+          <table>
+            <thead><tr>
+              <th style="width:20%">לקוח</th>
+              <th style="width:25%">מוצר</th>
+              <th style="width:14%">דדליין</th>
+              <th style="width:13%">סטטוס</th>
+              <th style="width:13%">תשלום</th>
+              <th style="width:15%">עלות / מחיר</th>
+            </tr></thead>
+            <tbody id="dash-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dash-section">
+        <div class="dash-section-title">⚠ דדליינים קרובים — לא סופקו</div>
+        <div class="table-card">
+          <table>
+            <thead><tr>
+              <th style="width:20%">לקוח</th>
+              <th style="width:30%">מוצר</th>
+              <th style="width:18%">דדליין</th>
+              <th style="width:16%">ימים נותרים</th>
+              <th style="width:16%">סטטוס</th>
+            </tr></thead>
+            <tbody id="dash-deadlines-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="dash-section">
+        <div class="dash-section-title">התראות מלאי</div>
+        <div class="table-card">
+          <table>
+            <thead><tr>
+              <th style="width:30%">חומר</th>
+              <th style="width:20%">כמות נוכחית</th>
+              <th style="width:20%">סף התראה</th>
+              <th style="width:30%">רמה</th>
+            </tr></thead>
+            <tbody id="dash-inv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="page-orders" class="page">
+      <div class="page-header">
+        <div><div class="page-title">הזמנות</div><div class="page-subtitle" id="orders-count-label"></div></div>
+        <button class="btn btn-primary" onclick="openOrderModal()">+ הזמנה חדשה</button>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span class="table-title">כל ההזמנות</span>
+          <input class="search-box" placeholder="חיפוש לקוח / מוצר..." id="orders-search" oninput="renderOrdersTable()">
+          <select class="filter-select" id="orders-filter-status" onchange="renderOrdersTable()">
+            <option value="">כל הסטטוסים</option>
+            <option>חדשה</option><option>בתהליך</option><option>הושלם</option><option>נשלח</option>
+          </select>
+          <select class="filter-select" id="orders-filter-pay" onchange="renderOrdersTable()">
+            <option value="">כל התשלומים</option>
+            <option>טרם שולם</option><option>חלקי</option><option>שולם</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:17%">לקוח</th>
+            <th style="width:13%">טלפון</th>
+            <th style="width:22%">מוצר</th>
+            <th style="width:11%">תאריך</th>
+            <th style="width:11%">דדליין</th>
+            <th style="width:11%">סטטוס</th>
+            <th style="width:10%">תשלום</th>
+            <th style="width:5%"></th>
+          </tr></thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="page-inventory" class="page">
+      <div class="page-header">
+        <div><div class="page-title">חומרי גלם</div><div class="page-subtitle" id="inv-count-label"></div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="inv-sel-label" style="font-size:13px;color:var(--text2);display:none"></span>
+          <button class="btn btn-danger btn-sm" id="btn-bulk-delete" onclick="bulkDeleteInv()" style="display:none">🗑 מחק נבחרים</button>
+          <button class="btn" onclick="printQRLabels()">🖨 מדבקות QR</button>
+          <button class="btn btn-primary" onclick="openInvModal()">+ פריט חדש</button>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span class="table-title">מלאי</span>
+          <input class="search-box" placeholder="חיפוש חומר..." id="inv-search" oninput="renderInvTable()">
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:4%"><input type="checkbox" id="inv-check-all" onchange="toggleAllInv(this)" style="cursor:pointer;accent-color:var(--accent)"></th>
+            <th style="width:22%">שם חומר</th>
+            <th style="width:13%">כמות</th>
+            <th style="width:9%">יחידה</th>
+            <th style="width:13%">עלות / יחידה</th>
+            <th style="width:13%">ספק</th>
+            <th style="width:12%">רמה</th>
+            <th style="width:14%">מצב</th>
+          </tr></thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <div id="page-expenses" class="page">
+      <div class="page-header">
+        <div><div class="page-title">הוצאות</div><div class="page-subtitle" id="exp-count-label"></div></div>
+        <button class="btn btn-primary" onclick="openExpModal()">+ הוצאה חדשה</button>
+      </div>
+      <div class="metrics" id="exp-metrics" style="margin-bottom:1.5rem"></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <span class="table-title">כל ההוצאות</span>
+          <input class="search-box" placeholder="חיפוש..." id="exp-search" oninput="renderExpTable()">
+          <select class="filter-select" id="exp-filter-cat" onchange="renderExpTable()">
+            <option value="">כל הקטגוריות</option>
+            <option>חומרי גלם</option>
+            <option>חומרי אריזה</option>
+            <option>ציוד</option>
+            <option>משלוח</option>
+            <option>שיווק</option>
+            <option>אחר</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:13%">תאריך</th>
+            <th style="width:20%">ספק</th>
+            <th style="width:28%">תיאור</th>
+            <th style="width:14%">קטגוריה</th>
+            <th style="width:10%">סכום</th>
+            <th style="width:10%">סטטוס</th>
+            <th style="width:5%"></th>
+          </tr></thead>
+          <tbody id="exp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    <div id="page-stats" class="page">
+      <div class="page-header" style="margin-bottom:1rem">
+        <div><div class="page-title">סטטיסטיקות</div></div>
+        <select class="filter-select" id="stats-period" onchange="renderStats()">
+          <option value="all">כל הזמן</option>
+          <option value="90">90 ימים</option>
+          <option value="30">30 ימים</option>
+        </select>
+      </div>
+      <div id="stats-kpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:0.75rem"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">הכנסות לאורך זמן</div>
+          <canvas id="chart-revenue" height="65"></canvas>
+        </div>
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">הכנסות vs הוצאות</div>
+          <canvas id="chart-profit" height="65"></canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">סטטוס הזמנות</div>
+          <canvas id="chart-status" height="65"></canvas>
+        </div>
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">הוצאות לפי קטגוריה</div>
+          <canvas id="chart-exp-cat" height="65"></canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">אמצעי תשלום</div>
+          <canvas id="chart-payment" height="65"></canvas>
+        </div>
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">לקוחות מובילים</div>
+          <canvas id="chart-customers" height="65"></canvas>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div class="table-card" style="padding:0.5rem 0.75rem">
+          <div class="dash-section-title" style="margin-bottom:4px">מוצרים מובילים</div>
+          <canvas id="chart-products" height="65"></canvas>
+        </div>
+        <div style="padding:0"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-overlay" id="order-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="order-modal-title">הזמנה חדשה</span>
+      <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-section">פרטי לקוח</div>
+        <div class="form-group"><label class="form-label">שם לקוח *</label><input class="form-input" id="o-name" placeholder="שם מלא"></div>
+        <div class="form-group"><label class="form-label">טלפון</label><input class="form-input" id="o-phone" placeholder="050-..."></div>
+        <div class="form-group full"><label class="form-label">כתובת / עיר</label><input class="form-input" id="o-address" placeholder="כתובת למשלוח"></div>
+
+        <div class="form-section">פרטי הזמנה</div>
+        <div class="form-group full"><label class="form-label">תיאור מוצר *</label><input class="form-input" id="o-product" placeholder="שם ותיאור המוצר"></div>
+        <div class="form-group"><label class="form-label">תאריך הזמנה</label><input type="date" class="form-input" id="o-date" oninput="autoDeadline()"></div>
+        <div class="form-group"><label class="form-label">דדליין <span style="font-size:10px;color:var(--text3);font-weight:400">(5 ימי עסקים)</span></label><input type="date" class="form-input" id="o-deadline"></div>
+        <div class="form-group"><label class="form-label">סטטוס</label>
+          <select class="form-input" id="o-status"><option>חדשה</option><option>בתהליך</option><option>הושלם</option><option>נשלח</option></select></div>
+        <div class="form-group"><label class="form-label">מחיר מכירה (₪)</label><input type="number" class="form-input" id="o-price" placeholder="0" oninput="updateProfit()"></div>
+        <div class="form-group"><label class="form-label">סטטוס תשלום</label>
+          <select class="form-input" id="o-pay-status"><option>טרם שולם</option><option>חלקי</option><option>שולם</option></select></div>
+        <div class="form-group"><label class="form-label">סכום שהתקבל (₪)</label><input type="number" class="form-input" id="o-paid" placeholder="0" oninput="updateProfit()"></div>
+        <div class="form-group full"><label class="form-label">הערות</label><textarea class="form-input" id="o-notes" placeholder="צבע, פונט, הוראות מיוחדות..."></textarea></div>
+
+        <div class="form-section">חומרי גלם בשימוש</div>
+        <div class="materials-list" id="mat-list">
+          <div class="materials-list-header"><span>חומר</span><span>כמות</span><span>עלות</span><span></span></div>
+          <div id="mat-rows"></div>
+        </div>
+        <div style="grid-column:1/-1"><button class="btn-add-mat" onclick="addMatRow()">+ הוסף חומר גלם</button></div>
+
+        <div class="form-section">סיכום כלכלי</div>
+        <div style="grid-column:1/-1; background:var(--bg); border-radius:var(--radius); padding:12px 14px;">
+          <div class="profit-row"><span class="label">עלות חומרי גלם</span><span class="val" id="profit-mat-cost">₪0</span></div>
+          <div class="profit-row"><span class="label">מחיר מכירה</span><span class="val" id="profit-price">₪0</span></div>
+          <div class="profit-row total"><span class="label">רווח גולמי</span><span class="val" id="profit-gross">₪0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-order" onclick="deleteCurrentOrder()" style="display:none">מחיקה</button>
+      <div class="modal-footer-right">
+        <button class="btn btn-sm" onclick="closeOrderModal()">ביטול</button>
+        <button class="btn btn-primary btn-sm" onclick="saveOrder()">שמירה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INVENTORY MODAL -->
+<div class="modal-overlay" id="inv-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="inv-modal-title">פריט מלאי חדש</span>
+      <button class="modal-close" onclick="closeInvModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">שם חומר *</label><input class="form-input" id="i-name" placeholder="שם החומר"></div>
+        <div class="form-group"><label class="form-label">כמות נוכחית</label><input type="number" step="0.01" class="form-input" id="i-qty" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">יחידת מידה</label><input class="form-input" id="i-unit" placeholder='ק"ג, גרם, מטר, יחידה'></div>
+        <div class="form-group"><label class="form-label">עלות ליחידה (₪)</label><input type="number" step="0.01" class="form-input" id="i-cost" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">ספק</label><input class="form-input" id="i-supplier" placeholder="שם הספק"></div>
+        <div class="form-group"><label class="form-label">טלפון ספק</label><input class="form-input" id="i-supplier-phone" placeholder="050-..."></div>
+        <div class="form-group"><label class="form-label">סף התראה</label><input type="number" step="0.01" class="form-input" id="i-threshold" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">הערות</label><input class="form-input" id="i-notes" placeholder="הערות נוספות"></div>
+      </div>
+    </div>
+    <div id="inv-qr-area" style="display:none;padding:0.75rem 1.5rem;border-top:1px solid var(--border);background:var(--bg);display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div id="inv-qr-canvas" style="flex-shrink:0"></div>
+      <div>
+        <div style="font-size:12px;font-weight:500;margin-bottom:2px" id="inv-qr-name"></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px">סרוק לעדכון מלאי מיידי</div>
+        <button class="btn btn-sm" onclick="printQR()" style="font-size:11px;padding:4px 10px">🖨 הדפס מדבקה</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-inv" onclick="deleteCurrentInv()" style="display:none">מחיקה</button>
+      <div class="modal-footer-right">
+        <button class="btn btn-sm" id="btn-show-qr" onclick="showInvQR()" style="display:none">QR 📱</button>
+        <button class="btn btn-sm" onclick="closeInvModal()">ביטול</button>
+        <button class="btn btn-primary btn-sm" onclick="saveInv()">שמירה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal-overlay" id="exp-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="exp-modal-title">הוצאה חדשה</span>
+      <button class="modal-close" onclick="closeExpModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">תאריך *</label><input type="date" class="form-input" id="e-date"></div>
+        <div class="form-group"><label class="form-label">קטגוריה</label>
+          <select class="form-input" id="e-cat">
+            <option>חומרי גלם</option>
+            <option>חומרי אריזה</option>
+            <option>ציוד</option>
+            <option>משלוח</option>
+            <option>שיווק</option>
+            <option>אחר</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">ספק</label><input class="form-input" id="e-supplier" placeholder="שם הספק"></div>
+        <div class="form-group"><label class="form-label">סכום (₪) *</label><input type="number" step="0.01" class="form-input" id="e-amount" placeholder="0"></div>
+        <div class="form-group full"><label class="form-label">תיאור ההוצאה</label><input class="form-input" id="e-desc" placeholder="מה נרכש?"></div>
+        <div class="form-group"><label class="form-label">סטטוס</label>
+          <select class="form-input" id="e-status">
+            <option>שולם</option>
+            <option>ממתין לתשלום</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">הערות</label><input class="form-input" id="e-notes" placeholder="הערות נוספות"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-delete-exp" onclick="deleteCurrentExp()" style="display:none">מחיקה</button>
+      <div class="modal-footer-right">
+        <button class="btn btn-sm" onclick="closeExpModal()">ביטול</button>
+        <button class="btn btn-primary btn-sm" onclick="saveExp()">שמירה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR LABELS MODAL -->
+<div class="modal-overlay" id="qr-modal" style="padding:1rem">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <span class="modal-title">מדבקות QR — חומרי גלם</span>
+      <button class="modal-close" onclick="document.getElementById('qr-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:1rem">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">סרוק את ה-QR עם הטלפון כדי לפתוח ישירות את עדכון הכמות לאותו חומר. הדפס ושמור ליד המדף.</p>
+      <div id="qr-labels-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-sm" onclick="document.getElementById('qr-modal').classList.remove('open')">סגור</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">הדפס</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QR QUICK UPDATE MODAL -->
+<div class="modal-overlay" id="qr-update-modal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title" id="qr-update-title">עדכון כמות</span>
+      <button class="modal-close" onclick="document.getElementById('qr-update-modal').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:1rem">
+        <div id="qr-item-name" style="font-size:18px;font-weight:600;margin-bottom:4px"></div>
+        <div id="qr-item-qty" style="font-size:13px;color:var(--text2)"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label class="form-label">פעולה</label>
+          <select class="form-input" id="qr-action">
+            <option value="set">הגדר כמות חדשה</option>
+            <option value="sub">הפחת (שימוש)</option>
+            <option value="add">הוסף (רכישה)</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label class="form-label">כמות</label>
+          <input type="number" step="0.01" class="form-input" id="qr-qty-input" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-sm" onclick="document.getElementById('qr-update-modal').classList.remove('open')">ביטול</button>
+        <button class="btn btn-primary btn-sm" onclick="saveQRUpdate()">שמירה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+@media print {
+  .sidebar, .main > .page:not(#page-inventory), #page-inventory .page-header,
+  #page-inventory .table-card, .modal-overlay:not(#qr-modal) { display: none !important; }
+  #qr-modal { position: static !important; background: none !important; padding: 0 !important; display: block !important; }
+  #qr-modal .modal { max-width: 100% !important; border: none !important; box-shadow: none !important; }
+  #qr-modal .modal-header, #qr-modal .modal-footer { display: none !important; }
+  #qr-labels-grid { grid-template-columns: repeat(3,1fr) !important; }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyDjyrsSFg4tgpG9aF1eLyqVpBROVaHc_aM",
+  authDomain: "filament-3d.firebaseapp.com",
+  databaseURL: "https://filament-3d-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "filament-3d",
+  storageBucket: "filament-3d.firebasestorage.app",
+  messagingSenderId: "1034426335077",
+  appId: "1:1034426335077:web:9e192ab2a4eda9d85feb8c"
+});
+const db = getDatabase(app);
+
+function setSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {
+    connecting: ['מתחבר...', 'var(--amber)', '#BA7517'],
+    synced:     ['מסונכרן ✓', 'var(--green)', '#1D9E75'],
+    saving:     ['שומר...', 'var(--amber)', '#BA7517'],
+    error:      ['שגיאת חיבור ✗', 'var(--red)', '#C0392B'],
+  };
+  const [text, color, dot] = map[state] || map.synced;
+  el.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${dot};margin-left:5px;vertical-align:middle"></span><span style="color:${color};font-size:12px;font-weight:500">${text}</span>`;
+}
+
+function fbSave(path, data) {
+  setSyncStatus('saving');
+  set(ref(db, path), data)
+    .then(() => setSyncStatus('synced'))
+    .catch(e => { console.error(e); setSyncStatus('error'); });
+}
+
+const DEFAULT_ORDERS = [
+  { id:1,  name:'אור רווח',        phone:'', address:'', product:'5 ₪ לרכב — סיאט + יונדאי',                         date:'2025-09-24', deadline:'', status:'הושלם', price:35,  payStatus:'שולם', paid:35,  notes:'ביט', materials:[] },
+  { id:2,  name:'חנן אבוטבול',     phone:'', address:'', product:'כרטיס ביקור מודפס',                                  date:'2025-09-24', deadline:'', status:'הושלם', price:500, payStatus:'שולם', paid:500, notes:'ביט', materials:[] },
+  { id:3,  name:'נטלי חליוה',      phone:'', address:'', product:'5 ₪ לרכב — סקודה',                                  date:'2025-09-25', deadline:'', status:'הושלם', price:20,  payStatus:'שולם', paid:20,  notes:'ביט', materials:[] },
+  { id:4,  name:"ז\'אנה",         phone:'', address:'', product:'5 ₪ לרכב — קיה',                                   date:'2025-09-26', deadline:'', status:'הושלם', price:20,  payStatus:'שולם', paid:20,  notes:'ביט', materials:[] },
+  { id:5,  name:"ז\'אנה",         phone:'', address:'', product:'5 ₪ לרכב — טויוטה x2',                             date:'2025-09-26', deadline:'', status:'הושלם', price:35,  payStatus:'שולם', paid:35,  notes:'ביט', materials:[] },
+  { id:6,  name:'סילאן',           phone:'', address:'', product:'5 ₪ לרכב — קיה x2',                                date:'2025-09-27', deadline:'', status:'הושלם', price:35,  payStatus:'שולם', paid:35,  notes:'מזומן', materials:[] },
+  { id:7,  name:'איילון קדוש',     phone:'', address:'', product:'5 ₪ לרכב — סקודה x2, יונדאי x2, הונדה, פולקסוואגן', date:'2025-09-28', deadline:'', status:'הושלם', price:55,  payStatus:'שולם', paid:55,  notes:'ביט', materials:[] },
+  { id:8,  name:'אנה',             phone:'', address:'', product:'תמונות מזמור לתודה x2',                             date:'2025-10-06', deadline:'', status:'הושלם', price:150, payStatus:'שולם', paid:150, notes:'', materials:[] },
+  { id:9,  name:'אנה',             phone:'', address:'', product:'מחזיקי מפתחות האש שלי x2',                          date:'2025-10-06', deadline:'', status:'הושלם', price:0,   payStatus:'שולם', paid:0,   notes:'', materials:[] },
+  { id:10, name:'איילת',           phone:'', address:'', product:'תמונה מזמור לתודה A4',                              date:'2025-10-08', deadline:'', status:'הושלם', price:120, payStatus:'שולם', paid:120, notes:'ביט', materials:[] },
+  { id:11, name:'חברה של אנה',     phone:'', address:'', product:'תמונה מזמור לתודה A4',                              date:'2025-10-09', deadline:'', status:'הושלם', price:100, payStatus:'שולם', paid:100, notes:'', materials:[] },
+  { id:12, name:'ענת יעקבי',       phone:'', address:'', product:'שלט לתיבת דואר',                                   date:'2025-10-29', deadline:'', status:'הושלם', price:70,  payStatus:'שולם', paid:70,  notes:'ביט', materials:[] },
+  { id:13, name:'נויה',            phone:'', address:'', product:'תמונה מזמור לתודה A4',                              date:'2025-12-13', deadline:'', status:'הושלם', price:120, payStatus:'שולם', paid:120, notes:'ביט', materials:[] },
+  { id:14, name:'נויה',            phone:'', address:'', product:'תמונה מזמור לתודה A4',                              date:'2026-01-30', deadline:'', status:'הושלם', price:120, payStatus:'שולם', paid:120, notes:'ביט', materials:[] },
+  { id:15, name:'נויה',            phone:'', address:'', product:'תמונה מזמור לתודה A4',                              date:'2026-01-30', deadline:'', status:'הושלם', price:120, payStatus:'שולם', paid:120, notes:'ביט', materials:[] },
+  { id:16, name:'שילת',            phone:'', address:'', product:'נר נשמה חשמלי',                                    date:'2026-02-09', deadline:'', status:'הושלם', price:100, payStatus:'שולם', paid:100, notes:'ביט', materials:[] },
+  { id:17, name:'תובלה',           phone:'', address:'', product:'זוג מחזיקי מפתחות תובלה',                           date:'2026-02-09', deadline:'', status:'הושלם', price:100, payStatus:'שולם', paid:100, notes:'מזומן', materials:[] },
+  { id:18, name:'איילת',           phone:'', address:'', product:'תמונה מזמור לתודה A4',                              date:'2026-02-11', deadline:'', status:'הושלם', price:120, payStatus:'שולם', paid:120, notes:'מזומן', materials:[] },
+  { id:19, name:'שרה אדרי',        phone:'', address:'', product:'נר נשמה חשמלי x2',                                 date:'2026-02-11', deadline:'', status:'הושלם', price:200, payStatus:'שולם', paid:200, notes:'מזומן', materials:[] },
+  { id:20, name:'אתי סויסה',       phone:'', address:'', product:'נר נשמה חשמלי x8',                                 date:'2026-02-23', deadline:'', status:'הושלם', price:600, payStatus:'שולם', paid:600, notes:'ביט', materials:[] },
+  { id:21, name:'תובלה',           phone:'', address:'', product:'זוג מחזיקי מפתחות תובלה',                           date:'2026-02-23', deadline:'', status:'הושלם', price:100, payStatus:'שולם', paid:100, notes:'ביט', materials:[] },
+  { id:22, name:'אתי סויסה',       phone:'', address:'', product:'נר נשמה חשמלי x2',                                 date:'2026-02-23', deadline:'', status:'הושלם', price:180, payStatus:'שולם', paid:180, notes:'ביט', materials:[] },
+  { id:23, name:'אור רווח',        phone:'', address:'', product:'מחזיק מפתחות "שאגת הארי" x3',                      date:'2026-03-03', deadline:'', status:'הושלם', price:40,  payStatus:'שולם', paid:40,  notes:'ביט', materials:[] },
+  { id:24, name:'ספיר דויקר',      phone:'', address:'', product:'סט שבת מהודר + 6 חובקים',                          date:'2026-03-05', deadline:'', status:'הושלם', price:360, payStatus:'שולם', paid:360, notes:'ביט', materials:[] },
+  { id:25, name:'נועה בר',         phone:'', address:'', product:'סט שבת מהודר + משלוח',                             date:'2026-03-10', deadline:'', status:'בעבודה', price:330, payStatus:'שולם', paid:330, notes:'ביט', materials:[] },
+  { id:26, name:'ספיר דויקר',      phone:'', address:'', product:'סט פסח x2',                                        date:'2026-03-13', deadline:'', status:'בעבודה', price:650, payStatus:'טרם שולם', paid:0, notes:'', materials:[] },
+  { id:27, name:'חני פינטו',       phone:'', address:'', product:'סט שבת מהודר ללא מעמד נרות (12 חבקים)',             date:'2026-03-13', deadline:'', status:'הושלם', price:220, payStatus:'שולם', paid:220, notes:'ביט', materials:[] },
+];
+const DEFAULT_INV = [
+  { id:1,  name:'פילמנט שחור',      qty:3000, unit:'גרם', costPerUnit:0.08, supplier:'', supplierPhone:'', threshold:300, notes:'' },
+  { id:2,  name:'פילמנט לבן',       qty:1795, unit:'גרם', costPerUnit:0.08, supplier:'', supplierPhone:'', threshold:300, notes:'' },
+  { id:3,  name:'פילמנט אדום',      qty:1950, unit:'גרם', costPerUnit:0.08, supplier:'', supplierPhone:'', threshold:300, notes:'' },
+  { id:4,  name:'פילמנט עץ',        qty:1000, unit:'גרם', costPerUnit:0.10, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+  { id:5,  name:'פילמנט כחול',      qty:300,  unit:'גרם', costPerUnit:0.08, supplier:'', supplierPhone:'', threshold:300, notes:'' },
+  { id:6,  name:'פילמנט ירוק',      qty:150,  unit:'גרם', costPerUnit:0.08, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+  { id:7,  name:'פילמנט זהב',       qty:1000, unit:'גרם', costPerUnit:0.12, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+  { id:8,  name:'פילמנט ברונזה',    qty:1000, unit:'גרם', costPerUnit:0.12, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+  { id:9,  name:'פילמנט כסף וכחול', qty:995,  unit:'גרם', costPerUnit:0.12, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+  { id:10, name:'פילמנט כסף',       qty:450,  unit:'גרם', costPerUnit:0.12, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+  { id:11, name:'פילמנט אפור בטון', qty:400,  unit:'גרם', costPerUnit:0.08, supplier:'', supplierPhone:'', threshold:200, notes:'' },
+];
+
+let orders = [];
+let inventory = [];
+let nextOId = 1, nextIId = 1;
+let editingOId = null, editingIId = null;
+let dbLoaded = false;
+
+// ---- Listen to Firebase in real-time ----
+setSyncStatus('connecting');
+
+onValue(ref(db, 'orders'), snap => {
+  const val = snap.val();
+  if (val) {
+    orders = Object.values(val).sort((a,b) => b.id - a.id);
+    nextOId = Math.max(...orders.map(o=>o.id)) + 1;
+  } else {
+    // First load — seed with defaults
+    orders = DEFAULT_ORDERS;
+    nextOId = 28;
+    const obj = {};
+    DEFAULT_ORDERS.forEach(o => { obj[o.id] = o; });
+    set(ref(db, 'orders'), obj);
+  }
+  setSyncStatus('synced');
+  if (!dbLoaded) { dbLoaded = true; renderAll(); checkQRHash(); } else { renderAll(); }
+});
+
+let invInitialized = false;
+onValue(ref(db, 'inventory'), snap => {
+  const val = snap.val();
+  if (val) {
+    inventory = Object.values(val).sort((a,b) => a.id - b.id);
+    nextIId = Math.max(...inventory.map(i=>i.id)) + 1;
+    invInitialized = true;
+  } else if (!invInitialized) {
+    // First ever load with no data — seed defaults
+    inventory = DEFAULT_INV;
+    nextIId = 12;
+    const obj = {};
+    DEFAULT_INV.forEach(i => { obj[i.id] = i; });
+    set(ref(db, 'inventory'), obj);
+    invInitialized = true;
+  } else {
+    // User deliberately deleted everything — keep empty
+    inventory = [];
+    nextIId = 1;
+  }
+  const page = document.querySelector('.page.active')?.id;
+  if (page === 'page-inventory') renderInvTable();
+  renderDashboard();
+});
+
+// ---- Navigation ----
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const map = {dashboard:0, orders:1, inventory:2, expenses:3, stats:4};
+  document.querySelectorAll('.nav-item')[map[p]]?.classList.add('active');
+  if(p==='dashboard') renderDashboard();
+  if(p==='orders') renderOrdersTable();
+  if(p==='inventory') renderInvTable();
+  if(p==='expenses') renderExpTable();
+  if(p==='stats') renderStats();
+}
+window.showPage = showPage;
+
+// ---- Business days ----
+function addBusinessDays(dateStr, days) {
+  const d = new Date(dateStr);
+  let added = 0;
+  while (added < days) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 5 && dow !== 6) added++; // skip Fri (5) and Sat (6) for Israel
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+function autoDeadline() {
+  const dateVal = document.getElementById('o-date')?.value;
+  const dlEl = document.getElementById('o-deadline');
+  if (dateVal && dlEl && !dlEl.value) {
+    dlEl.value = addBusinessDays(dateVal, 5);
+  }
+}
+window.autoDeadline = autoDeadline;
+
+// ---- Helpers ----
+function fmt(d) { if(!d) return '—'; const p=d.split('-'); return `${p[2]}/${p[1]}/${p[0].slice(2)}`; }
+function dlClass(d) { if(!d) return ''; const t=new Date(); t.setHours(0,0,0,0); const diff=Math.floor((new Date(d)-t)/86400000); if(diff<0) return 'dl-overdue'; if(diff<=3) return 'dl-soon'; return ''; }
+function statusBadge(s) { const m={'חדשה':'badge-new','בתהליך':'badge-progress','הושלם':'badge-done','נשלח':'badge-shipped'}; return `<span class="badge ${m[s]||'badge-new'}">${s}</span>`; }
+function payBadge(s) { const m={'שולם':'badge-paid','חלקי':'badge-partial','טרם שולם':'badge-unpaid'}; return `<span class="badge ${m[s]||'badge-unpaid'}">${s}</span>`; }
+function matCost(o) { return (o.materials||[]).reduce((s,m)=>{ const inv=inventory.find(i=>i.id===m.invId); return s+(inv?(m.qty*(inv.costPerUnit||0)):0); },0); }
+function fmtNIS(n) { return '₪'+Math.round(n).toLocaleString('he-IL'); }
+
+function renderAll() {
+  const page = document.querySelector('.page.active')?.id?.replace('page-','');
+  renderDashboard();
+  if(page==='orders') renderOrdersTable();
+  if(page==='inventory') renderInvTable();
+}
+
+// ---- Dashboard ----
+function renderDashboard() {
+  const d = new Date();
+  document.getElementById('dash-date').textContent = d.toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const active = orders.filter(o=>o.status!=='הושלם'&&o.status!=='נשלח');
+  const done = orders.filter(o=>o.status==='הושלם'||o.status==='נשלח');
+  const unpaid = orders.filter(o=>o.payStatus!=='שולם').reduce((s,o)=>(s+(o.price||0)-(o.paid||0)),0);
+  const rev = done.reduce((s,o)=>s+(o.paid||0),0);
+  const lowInv = inventory.filter(i=>i.qty<=i.threshold);
+
+  const totalExp = expenses.reduce((s,e)=>s+e.amount,0);
+  const netProfit = rev - totalExp;
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric-card accent"><div class="metric-label">הזמנות פעילות</div><div class="metric-value">${active.length}</div><div class="metric-hint">מתוך ${orders.length} סה"כ</div></div>
+    <div class="metric-card"><div class="metric-label">הכנסות שהתקבלו</div><div class="metric-value">${fmtNIS(rev)}</div><div class="metric-hint">מהזמנות שהושלמו</div></div>
+    <div class="metric-card"><div class="metric-label">סה"כ הוצאות</div><div class="metric-value" style="color:var(--red)">${fmtNIS(totalExp)}</div><div class="metric-hint">כולל ממתינים</div></div>
+    <div class="metric-card"><div class="metric-label">רווח נקי משוער</div><div class="metric-value" style="color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtNIS(netProfit)}</div><div class="metric-hint">הכנסות פחות הוצאות</div></div>
+  `;
+
+  const tbody = document.getElementById('dash-orders-tbody');
+  if(!active.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="6">אין הזמנות פעילות</td></tr>'; }
+  else tbody.innerHTML = active.map(o=>{
+    const mc=matCost(o);
+    return `<tr onclick="window.editOrder(${o.id})">
+      <td>${o.name}</td><td>${o.product}</td>
+      <td class="${dlClass(o.deadline)}">${fmt(o.deadline)}</td>
+      <td>${statusBadge(o.status)}</td><td>${payBadge(o.payStatus)}</td>
+      <td style="font-size:12px;color:var(--text2)">${fmtNIS(mc)} / <strong>${fmtNIS(o.price||0)}</strong></td>
+    </tr>`;
+  }).join('');
+
+  // Deadline alerts: active orders not shipped, with deadline within 7 days or overdue
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = orders.filter(o => {
+    if (o.status === 'הושלם' || o.status === 'נשלח') return false;
+    if (!o.deadline) return false;
+    const dl = new Date(o.deadline);
+    const diff = Math.floor((dl - today) / 86400000);
+    return diff <= 7;
+  }).sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
+
+  const dlbody = document.getElementById('dash-deadlines-tbody');
+  if (!upcoming.length) {
+    dlbody.innerHTML = '<tr class="empty-row"><td colspan="5">אין דדליינים קרובים ✓</td></tr>';
+  } else {
+    dlbody.innerHTML = upcoming.map(o => {
+      const diff = Math.floor((new Date(o.deadline) - today) / 86400000);
+      const diffLabel = diff < 0 ? `איחור של ${Math.abs(diff)} ימים` : diff === 0 ? 'היום!' : `${diff} ימים`;
+      const diffColor = diff < 0 ? 'var(--red)' : diff <= 2 ? 'var(--amber)' : 'var(--text2)';
+      return `<tr onclick="window.editOrder(${o.id})">
+        <td>${o.name}</td>
+        <td>${o.product}</td>
+        <td class="${dlClass(o.deadline)}">${fmt(o.deadline)}</td>
+        <td style="font-weight:500;color:${diffColor}">${diffLabel}</td>
+        <td>${statusBadge(o.status)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const itbody = document.getElementById('dash-inv-tbody');
+  if(!lowInv.length) { itbody.innerHTML='<tr class="empty-row"><td colspan="4">כל המלאים תקינים ✓</td></tr>'; }
+  else itbody.innerHTML = lowInv.map(i=>{
+    const pct = i.threshold>0 ? Math.min(100,Math.round((i.qty/i.threshold)*100)) : 100;
+    return `<tr onclick="window.editInv(${i.id})">
+      <td>${i.name}</td>
+      <td style="color:var(--red);font-weight:500">${i.qty} ${i.unit}</td>
+      <td>${i.threshold} ${i.unit}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="inv-bar-wrap"><div class="inv-bar low" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--red)">${pct}%</span></div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- Orders Table ----
+function renderOrdersTable() {
+  const q = (document.getElementById('orders-search')?.value||'').toLowerCase();
+  const fs = document.getElementById('orders-filter-status')?.value||'';
+  const fp = document.getElementById('orders-filter-pay')?.value||'';
+  const filtered = orders.filter(o=>{
+    if(fs && o.status!==fs) return false;
+    if(fp && o.payStatus!==fp) return false;
+    if(q && !o.name.toLowerCase().includes(q) && !o.product.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  document.getElementById('orders-count-label').textContent = `${filtered.length} הזמנות`;
+  const tbody = document.getElementById('orders-tbody');
+  if(!filtered.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="8">לא נמצאו הזמנות</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(o=>`
+    <tr onclick="window.editOrder(${o.id})">
+      <td>${o.name}</td><td>${o.phone||'—'}</td>
+      <td title="${o.notes||''}">${o.product}</td>
+      <td>${fmt(o.date)}</td>
+      <td class="${dlClass(o.deadline)}">${fmt(o.deadline)}</td>
+      <td>${statusBadge(o.status)}</td><td>${payBadge(o.payStatus)}</td>
+      <td><span style="font-size:12px;color:var(--text2)">${fmtNIS(o.price||0)}</span></td>
+    </tr>`).join('');
+}
+window.renderOrdersTable = renderOrdersTable;
+
+// ---- Inventory Table ----
+let selectedInvIds = new Set();
+
+function updateBulkUI() {
+  const count = selectedInvIds.size;
+  const btn = document.getElementById('btn-bulk-delete');
+  const lbl = document.getElementById('inv-sel-label');
+  const all = document.getElementById('inv-check-all');
+  btn.style.display = count > 0 ? '' : 'none';
+  lbl.style.display = count > 0 ? '' : 'none';
+  if (count > 0) lbl.textContent = `${count} נבחרו`;
+  if (all) all.indeterminate = count > 0 && count < inventory.length;
+  if (all) all.checked = count > 0 && count === inventory.length;
+}
+
+function toggleAllInv(cb) {
+  const q = (document.getElementById('inv-search')?.value||'').toLowerCase();
+  const filtered = inventory.filter(i=>!q||i.name.toLowerCase().includes(q)||(i.supplier||'').toLowerCase().includes(q));
+  if (cb.checked) { filtered.forEach(i => selectedInvIds.add(i.id)); }
+  else { selectedInvIds.clear(); }
+  renderInvTable();
+}
+window.toggleAllInv = toggleAllInv;
+
+function toggleInvRow(id, e) {
+  e.stopPropagation();
+  if (selectedInvIds.has(id)) selectedInvIds.delete(id);
+  else selectedInvIds.add(id);
+  updateBulkUI();
+  // re-render just the checkbox state without full re-render
+  const cb = document.getElementById('inv-cb-'+id);
+  if (cb) cb.checked = selectedInvIds.has(id);
+  const row = cb?.closest('tr');
+  if (row) row.style.background = selectedInvIds.has(id) ? 'var(--green-bg)' : '';
+}
+window.toggleInvRow = toggleInvRow;
+
+async function bulkDeleteInv() {
+  if (!selectedInvIds.size) return;
+  if (!confirm(`למחוק ${selectedInvIds.size} פריטים?`)) return;
+  const ids = [...selectedInvIds];
+  selectedInvIds.clear();
+  for (const id of ids) {
+    await set(ref(db, 'inventory/' + id), null);
+  }
+  updateBulkUI();
+}
+window.bulkDeleteInv = bulkDeleteInv;
+
+function renderInvTable() {
+  const q = (document.getElementById('inv-search')?.value||'').toLowerCase();
+  const filtered = inventory.filter(i=>!q||i.name.toLowerCase().includes(q)||(i.supplier||'').toLowerCase().includes(q));
+  document.getElementById('inv-count-label').textContent = `${filtered.length} פריטים`;
+  const tbody = document.getElementById('inv-tbody');
+  if(!filtered.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="8">לא נמצאו פריטים</td></tr>'; updateBulkUI(); return; }
+  tbody.innerHTML = filtered.map(i=>{
+    const low = i.qty<=i.threshold;
+    const pct = i.threshold>0 ? Math.min(100,Math.round((i.qty/i.threshold)*100)) : 100;
+    const sel = selectedInvIds.has(i.id);
+    return `<tr style="background:${sel?'var(--green-bg)':''}" onclick="window.editInv(${i.id})">
+      <td onclick="toggleInvRow(${i.id},event)" style="cursor:pointer"><input type="checkbox" id="inv-cb-${i.id}" ${sel?'checked':''} style="cursor:pointer;accent-color:var(--accent)" onchange="toggleInvRow(${i.id},event)"></td>
+      <td>${i.name}</td>
+      <td style="font-weight:500;${low?'color:var(--red)':''}">${i.qty}</td>
+      <td>${i.unit}</td>
+      <td>${i.costPerUnit!=null?fmtNIS(i.costPerUnit)+'/'+i.unit:'—'}</td>
+      <td>${i.supplier||'—'}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div class="inv-bar-wrap"><div class="inv-bar ${low?'low':'ok'}" style="width:${Math.max(5,pct)}%"></div></div><span style="font-size:11px;color:var(--text2)">${i.qty}/${i.threshold}</span></div></td>
+      <td><span class="badge ${low?'badge-low':'badge-ok'}">${low?'נמוך':'תקין'}</span></td>
+    </tr>`;
+  }).join('');
+  updateBulkUI();
+}
+window.renderInvTable = renderInvTable;
+
+// ---- Order Modal ----
+let matRowCount = 0;
+function openOrderModal(id) {
+  editingOId = id||null;
+  const o = id ? orders.find(x=>x.id===id) : null;
+  document.getElementById('order-modal-title').textContent = o ? 'עריכת הזמנה' : 'הזמנה חדשה';
+  document.getElementById('btn-delete-order').style.display = o ? '' : 'none';
+  const set = (i,v) => { const el=document.getElementById(i); if(el) el.value=v||''; };
+  set('o-name', o?.name); set('o-phone', o?.phone); set('o-address', o?.address);
+  set('o-product', o?.product); set('o-date', o?.date); set('o-deadline', o?.deadline);
+  set('o-notes', o?.notes); set('o-price', o?.price||''); set('o-paid', o?.paid||'');
+  document.getElementById('o-status').value = o?.status||'חדשה';
+  document.getElementById('o-pay-status').value = o?.payStatus||'טרם שולם';
+  matRowCount = 0;
+  document.getElementById('mat-rows').innerHTML = '';
+  (o?.materials||[]).forEach(m=>addMatRow(m.invId, m.qty));
+  updateProfit();
+  document.getElementById('order-modal').classList.add('open');
+}
+window.openOrderModal = openOrderModal;
+function closeOrderModal() { document.getElementById('order-modal').classList.remove('open'); }
+window.closeOrderModal = closeOrderModal;
+function editOrder(id) { openOrderModal(id); }
+window.editOrder = editOrder;
+
+function addMatRow(invId, qty) {
+  const rid = 'mat-row-' + matRowCount++;
+  const opts = inventory.map(i=>`<option value="${i.id}" ${i.id==invId?'selected':''}>${i.name} (${fmtNIS(i.costPerUnit||0)}/${i.unit})</option>`).join('');
+  const row = document.createElement('div');
+  row.className = 'material-row'; row.id = rid;
+  row.innerHTML = `
+    <select onchange="updateProfit()"><option value="">בחר חומר</option>${opts}</select>
+    <input type="number" step="0.01" value="${qty||''}" placeholder="0" oninput="updateProfit()">
+    <span class="mat-cost-display" style="font-size:12px;color:var(--text2)">₪0</span>
+    <button class="btn-remove-mat" onclick="document.getElementById('${rid}').remove();updateProfit()">×</button>`;
+  document.getElementById('mat-rows').appendChild(row);
+  updateProfit();
+}
+window.addMatRow = addMatRow;
+
+function getMaterials() {
+  return Array.from(document.querySelectorAll('#mat-rows .material-row')).map(row=>{
+    const sel = row.querySelector('select');
+    const inp = row.querySelector('input');
+    return { invId: parseInt(sel.value)||0, qty: parseFloat(inp.value)||0 };
+  }).filter(m=>m.invId && m.qty>0);
+}
+
+function updateProfit() {
+  let totalMatCost = 0;
+  document.querySelectorAll('#mat-rows .material-row').forEach(row=>{
+    const invId = parseInt(row.querySelector('select').value)||0;
+    const qty = parseFloat(row.querySelector('input').value)||0;
+    const inv = inventory.find(i=>i.id===invId);
+    const c = inv ? qty*(inv.costPerUnit||0) : 0;
+    totalMatCost += c;
+    row.querySelector('.mat-cost-display').textContent = '₪'+c.toFixed(2);
+  });
+  const price = parseFloat(document.getElementById('o-price')?.value)||0;
+  const profit = price - totalMatCost;
+  document.getElementById('profit-mat-cost').textContent = '₪'+totalMatCost.toFixed(2);
+  document.getElementById('profit-price').textContent = '₪'+price.toFixed(2);
+  const el = document.getElementById('profit-gross');
+  el.textContent = '₪'+profit.toFixed(2);
+  el.className = 'val ' + (profit>=0?'profit-positive':'profit-negative');
+}
+window.updateProfit = updateProfit;
+
+function saveOrder() {
+  const name = document.getElementById('o-name').value.trim();
+  const product = document.getElementById('o-product').value.trim();
+  if(!name||!product) { alert('שם לקוח ומוצר הם שדות חובה'); return; }
+  const id = editingOId || nextOId++;
+  const data = {
+    id, name, phone: document.getElementById('o-phone').value.trim(),
+    address: document.getElementById('o-address').value.trim(),
+    product, date: document.getElementById('o-date').value,
+    deadline: document.getElementById('o-deadline').value,
+    status: document.getElementById('o-status').value,
+    price: parseFloat(document.getElementById('o-price').value)||0,
+    payStatus: document.getElementById('o-pay-status').value,
+    paid: parseFloat(document.getElementById('o-paid').value)||0,
+    notes: document.getElementById('o-notes').value.trim(),
+    materials: getMaterials()
+  };
+  fbSave('orders/' + id, data);
+  closeOrderModal();
+}
+window.saveOrder = saveOrder;
+
+function deleteCurrentOrder() {
+  if(!confirm('למחוק את ההזמנה?')) return;
+  set(ref(db, 'orders/' + editingOId), null);
+  closeOrderModal();
+}
+window.deleteCurrentOrder = deleteCurrentOrder;
+
+// ---- Inventory Modal ----
+function openInvModal(id) {
+  editingIId = id||null;
+  const i = id ? inventory.find(x=>x.id===id) : null;
+  document.getElementById('inv-modal-title').textContent = i ? 'עריכת פריט מלאי' : 'פריט מלאי חדש';
+  document.getElementById('btn-delete-inv').style.display = i ? '' : 'none';
+  document.getElementById('btn-show-qr').style.display = i ? '' : 'none';
+  document.getElementById('inv-qr-area').style.display = 'none';
+  document.getElementById('inv-qr-canvas').innerHTML = '';
+  const setv = (el,v) => { const d=document.getElementById(el); if(d) d.value=v!=null?v:''; };
+  setv('i-name', i?.name); setv('i-qty', i?.qty); setv('i-unit', i?.unit);
+  setv('i-cost', i?.costPerUnit); setv('i-supplier', i?.supplier);
+  setv('i-supplier-phone', i?.supplierPhone); setv('i-threshold', i?.threshold); setv('i-notes', i?.notes);
+  document.getElementById('inv-modal').classList.add('open');
+}
+window.openInvModal = openInvModal;
+function closeInvModal() { document.getElementById('inv-modal').classList.remove('open'); }
+window.closeInvModal = closeInvModal;
+function editInv(id) { openInvModal(id); }
+window.editInv = editInv;
+
+function saveInv() {
+  const name = document.getElementById('i-name').value.trim();
+  if(!name) { alert('שם החומר הוא שדה חובה'); return; }
+  const id = editingIId || nextIId++;
+  const data = {
+    id, name,
+    qty: parseFloat(document.getElementById('i-qty').value)||0,
+    unit: document.getElementById('i-unit').value.trim(),
+    costPerUnit: parseFloat(document.getElementById('i-cost').value)||0,
+    supplier: document.getElementById('i-supplier').value.trim(),
+    supplierPhone: document.getElementById('i-supplier-phone').value.trim(),
+    threshold: parseFloat(document.getElementById('i-threshold').value)||0,
+    notes: document.getElementById('i-notes').value.trim()
+  };
+  fbSave('inventory/' + id, data);
+  closeInvModal();
+}
+window.saveInv = saveInv;
+
+function showInvQR() {
+  const i = inventory.find(x => x.id === editingIId);
+  if (!i) return;
+  const base = window.location.href.split('?')[0].split('#')[0];
+  const url = base + '?inv=' + i.id;
+  const area = document.getElementById('inv-qr-area');
+  const canvas = document.getElementById('inv-qr-canvas');
+  canvas.innerHTML = '';
+  area.style.display = 'flex';
+  document.getElementById('inv-qr-name').textContent = i.name;
+  new QRCode(canvas, { text: url, width: 80, height: 80, colorDark: '#1A1814', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+window.showInvQR = showInvQR;
+
+function printQR() {
+  const i = inventory.find(x => x.id === editingIId);
+  if (!i) return;
+  const base = window.location.href.split('?')[0].split('#')[0];
+  const url = base + '?inv=' + i.id;
+  const win = window.open('', '_blank', 'width=400,height=500');
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background: #fff; }
+    .label { border: 2px solid #1A1814; border-radius: 12px; padding: 16px 20px; text-align: center; max-width: 200px; }
+    .brand { font-size: 11px; color: #888; margin-bottom: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .name { font-size: 15px; font-weight: bold; margin: 8px 0 4px; }
+    .hint { font-size: 10px; color: #888; margin-top: 6px; }
+    @media print { body { margin: 0; } }
+  </style></head><body>
+  <div class="label">
+    <div class="brand">פילמנט 3D</div>
+    <div id="qr"></div>
+    <div class="name">${i.name}</div>
+    <div class="hint">סרוק לעדכון מלאי</div>
+  </div>
+  <script>
+    new QRCode(document.getElementById('qr'), { text: '${url}', width: 120, height: 120, colorDark: '#1A1814', colorLight: '#ffffff' });
+    setTimeout(() => window.print(), 600);
+  <\/script></body></html>`);
+  win.document.close();
+}
+window.printQR = printQR;
+
+function deleteCurrentInv() {
+  if(!confirm('למחוק פריט זה?')) return;
+  const idToDel = editingIId;
+  set(ref(db, 'inventory/' + idToDel), null)
+    .then(() => { setSyncStatus('synced'); })
+    .catch(() => setSyncStatus('error'));
+  closeInvModal();
+}
+window.deleteCurrentInv = deleteCurrentInv;
+
+// Close modals on overlay click
+// Close modal only when mousedown AND mouseup both land on the overlay (not when user drags to select text)
+function overlayClose(overlayId, closeFn) {
+  let downOnOverlay = false;
+  const el = document.getElementById(overlayId);
+  el.addEventListener('mousedown', e => { downOnOverlay = e.target === el; });
+  el.addEventListener('mouseup',   e => { if (downOnOverlay && e.target === el) closeFn(); downOnOverlay = false; });
+}
+overlayClose('order-modal', closeOrderModal);
+overlayClose('inv-modal',   closeInvModal);
+overlayClose('exp-modal',   closeExpModal);
+
+// ---- Expenses ----
+const DEFAULT_EXPENSES = [
+  { id:1, date:'2025-09-24', supplier:'',          desc:'אור רווח — עלות ייצור',     cat:'חומרי גלם',   amount:35,  status:'שולם',             notes:'' },
+  { id:2, date:'2026-03-07', supplier:'עדן אריזות', desc:'רכישת אריזות',              cat:'חומרי אריזה', amount:236, status:'שולם',             notes:'' },
+  { id:3, date:'2026-03-01', supplier:'הום סנטר',   desc:'נרות נשמה אלקטרוניים',      cat:'חומרי גלם',   amount:200, status:'ממתין לתשלום',     notes:'' },
+  { id:4, date:'2026-03-06', supplier:'אמזון',       desc:'חומרי הדפסה',               cat:'חומרי גלם',   amount:277, status:'ממתין לתשלום',     notes:'' },
+];
+
+let expenses = [];
+let nextEId = 1;
+let editingEId = null;
+
+onValue(ref(db, 'expenses'), snap => {
+  const val = snap.val();
+  if (val) {
+    expenses = Object.values(val).sort((a,b) => new Date(b.date) - new Date(a.date));
+    nextEId = Math.max(...expenses.map(e=>e.id)) + 1;
+  } else {
+    expenses = DEFAULT_EXPENSES;
+    nextEId = 5;
+    const obj = {};
+    DEFAULT_EXPENSES.forEach(e => { obj[e.id] = e; });
+    set(ref(db, 'expenses'), obj);
+  }
+  const page = document.querySelector('.page.active')?.id;
+  if (page === 'page-expenses') renderExpTable();
+  renderDashboard();
+});
+
+const CAT_COLORS = {
+  'חומרי גלם':   ['#E8F7F2','#0F6E56'],
+  'חומרי אריזה': ['#EEF4FF','#1A3F99'],
+  'ציוד':        ['#EEEDFE','#26215C'],
+  'משלוח':       ['#FEF3DC','#7A4D0D'],
+  'שיווק':       ['#FDECEA','#7D1F17'],
+  'אחר':         ['#F0EDE6','#4A4540'],
+};
+
+function catBadge(c) {
+  const [bg, col] = CAT_COLORS[c] || CAT_COLORS['אחר'];
+  return `<span class="badge" style="background:${bg};color:${col}">${c}</span>`;
+}
+
+function renderExpTable() {
+  const q = (document.getElementById('exp-search')?.value||'').toLowerCase();
+  const fc = document.getElementById('exp-filter-cat')?.value||'';
+  const filtered = expenses.filter(e => {
+    if(fc && e.cat!==fc) return false;
+    if(q && !(e.desc||'').toLowerCase().includes(q) && !(e.supplier||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // Metrics
+  const total = expenses.reduce((s,e)=>s+e.amount,0);
+  const paid  = expenses.filter(e=>e.status==='שולם').reduce((s,e)=>s+e.amount,0);
+  const pend  = expenses.filter(e=>e.status!=='שולם').reduce((s,e)=>s+e.amount,0);
+  const byCat = {};
+  expenses.forEach(e=>{ byCat[e.cat]=(byCat[e.cat]||0)+e.amount; });
+  const topCat = Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('exp-metrics').innerHTML = `
+    <div class="metric-card"><div class="metric-label">סה"כ הוצאות</div><div class="metric-value">${fmtNIS(total)}</div><div class="metric-hint">${expenses.length} רשומות</div></div>
+    <div class="metric-card"><div class="metric-label">שולם</div><div class="metric-value" style="color:var(--green)">${fmtNIS(paid)}</div></div>
+    <div class="metric-card"><div class="metric-label">ממתין לתשלום</div><div class="metric-value" style="color:${pend>0?'var(--amber)':'inherit'}">${fmtNIS(pend)}</div></div>
+    <div class="metric-card"><div class="metric-label">קטגוריה מובילה</div><div class="metric-value" style="font-size:16px">${topCat?topCat[0]:'—'}</div><div class="metric-hint">${topCat?fmtNIS(topCat[1]):''}</div></div>
+  `;
+
+  document.getElementById('exp-count-label').textContent = `${filtered.length} הוצאות`;
+  const tbody = document.getElementById('exp-tbody');
+  if(!filtered.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="7">לא נמצאו הוצאות</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(e=>`
+    <tr onclick="window.editExp(${e.id})">
+      <td>${fmt(e.date)}</td>
+      <td>${e.supplier||'—'}</td>
+      <td>${e.desc||'—'}</td>
+      <td>${catBadge(e.cat)}</td>
+      <td style="font-weight:500">${fmtNIS(e.amount)}</td>
+      <td><span class="badge ${e.status==='שולם'?'badge-paid':'badge-partial'}">${e.status}</span></td>
+      <td></td>
+    </tr>`).join('');
+}
+window.renderExpTable = renderExpTable;
+
+function openExpModal(id) {
+  editingEId = id||null;
+  const e = id ? expenses.find(x=>x.id===id) : null;
+  document.getElementById('exp-modal-title').textContent = e ? 'עריכת הוצאה' : 'הוצאה חדשה';
+  document.getElementById('btn-delete-exp').style.display = e ? '' : 'none';
+  const setv = (el,v) => { const d=document.getElementById(el); if(d) d.value=v!=null?v:''; };
+  setv('e-date', e?.date || new Date().toISOString().slice(0,10));
+  setv('e-supplier', e?.supplier);
+  setv('e-desc', e?.desc);
+  setv('e-amount', e?.amount);
+  setv('e-notes', e?.notes);
+  document.getElementById('e-cat').value = e?.cat||'חומרי גלם';
+  document.getElementById('e-status').value = e?.status||'שולם';
+  document.getElementById('exp-modal').classList.add('open');
+}
+window.openExpModal = openExpModal;
+
+function closeExpModal() { document.getElementById('exp-modal').classList.remove('open'); }
+window.closeExpModal = closeExpModal;
+
+function editExp(id) { openExpModal(id); }
+window.editExp = editExp;
+
+function saveExp() {
+  const date = document.getElementById('e-date').value;
+  const amount = parseFloat(document.getElementById('e-amount').value)||0;
+  if(!date || !amount) { alert('תאריך וסכום הם שדות חובה'); return; }
+  const id = editingEId || nextEId++;
+  const data = {
+    id, date,
+    supplier: document.getElementById('e-supplier').value.trim(),
+    desc: document.getElementById('e-desc').value.trim(),
+    cat: document.getElementById('e-cat').value,
+    amount,
+    status: document.getElementById('e-status').value,
+    notes: document.getElementById('e-notes').value.trim()
+  };
+  fbSave('expenses/' + id, data);
+  closeExpModal();
+}
+window.saveExp = saveExp;
+
+function deleteCurrentExp() {
+  if(!confirm('למחוק הוצאה זו?')) return;
+  set(ref(db, 'expenses/' + editingEId), null);
+  closeExpModal();
+}
+window.deleteCurrentExp = deleteCurrentExp;
+
+// ---- QR Labels ----
+function printQRLabels() {
+  const grid = document.getElementById('qr-labels-grid');
+  if (!inventory.length) { alert('אין פריטים במלאי'); return; }
+
+  const baseUrl = window.location.href.split('#')[0];
+  grid.innerHTML = inventory.map(item => {
+    const url = baseUrl + '#inv-' + item.id;
+    return `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center;background:white">
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text)">${item.name}</div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:8px">${item.qty} ${item.unit} | סף: ${item.threshold}</div>
+      <div id="qr-${item.id}" style="display:flex;justify-content:center;margin-bottom:6px"></div>
+      <div style="font-size:9px;color:var(--text3)">סרוק לעדכון מהיר</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('qr-modal').classList.add('open');
+
+  // Generate QR codes after render
+  setTimeout(() => {
+    inventory.forEach(item => {
+      const url = baseUrl + '#inv-' + item.id;
+      const el = document.getElementById('qr-' + item.id);
+      if (el && window.QRCode) {
+        el.innerHTML = '';
+        new QRCode(el, { text: url, width: 90, height: 90, colorDark: '#1A1814', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      }
+    });
+  }, 100);
+}
+window.printQRLabels = printQRLabels;
+
+// ---- QR Quick Update (opened via URL hash) ----
+let qrUpdateItemId = null;
+
+function checkQRHash() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#inv-')) return;
+  const id = parseInt(hash.replace('#inv-', ''));
+  if (!id) return;
+  openQRUpdate(id);
+}
+
+function openQRUpdate(id) {
+  qrUpdateItemId = id;
+  const item = inventory.find(i => i.id === id);
+  if (!item) { setTimeout(() => openQRUpdate(id), 500); return; } // wait for Firebase
+  document.getElementById('qr-item-name').textContent = item.name;
+  document.getElementById('qr-item-qty').textContent = 'כמות נוכחית: ' + item.qty + ' ' + item.unit;
+  document.getElementById('qr-qty-input').value = '';
+  document.getElementById('qr-action').value = 'sub';
+  document.getElementById('qr-update-modal').classList.add('open');
+}
+
+function saveQRUpdate() {
+  const item = inventory.find(i => i.id === qrUpdateItemId);
+  if (!item) return;
+  const action = document.getElementById('qr-action').value;
+  const val = parseFloat(document.getElementById('qr-qty-input').value) || 0;
+  let newQty = item.qty;
+  if (action === 'set') newQty = val;
+  else if (action === 'sub') newQty = Math.max(0, item.qty - val);
+  else if (action === 'add') newQty = item.qty + val;
+  newQty = Math.round(newQty * 100) / 100;
+  fbSave('inventory/' + item.id, { ...item, qty: newQty });
+  document.getElementById('qr-update-modal').classList.remove('open');
+  window.location.hash = '';
+}
+window.saveQRUpdate = saveQRUpdate;
+
+window.addEventListener('hashchange', checkQRHash);
+
+// Handle QR scan deep-link: ?inv=ID
+const urlParams = new URLSearchParams(window.location.search);
+const deepInvId = parseInt(urlParams.get('inv'));
+if (deepInvId) {
+  // Wait for inventory to load, then open the item
+  const tryOpen = setInterval(() => {
+    const item = inventory.find(i => i.id === deepInvId);
+    if (item) {
+      clearInterval(tryOpen);
+      showPage('inventory');
+      setTimeout(() => openInvModal(deepInvId), 100);
+    }
+  }, 200);
+  setTimeout(() => clearInterval(tryOpen), 5000);
+}
+
+// ---- Auth ----
+const AUTH_KEY = 'f3d_auth_v1';
+// Change this password to whatever you want:
+const APP_PASSWORD = 'filament2024';
+
+function checkAuth() {
+  const val = document.getElementById('auth-input').value;
+  if (val === APP_PASSWORD) {
+    sessionStorage.setItem(AUTH_KEY, '1');
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('auth-error').textContent = '';
+  } else {
+    document.getElementById('auth-error').textContent = 'סיסמה שגויה, נסה שוב';
+    document.getElementById('auth-input').value = '';
+    document.getElementById('auth-input').focus();
+  }
+}
+window.checkAuth = checkAuth;
+
+function toggleAuthVis() {
+  const inp = document.getElementById('auth-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+window.toggleAuthVis = toggleAuthVis;
+
+// Check if already authenticated this session
+if (sessionStorage.getItem(AUTH_KEY) === '1') {
+  document.getElementById('auth-screen').classList.add('hidden');
+}
+
+// Show loading state until Firebase responds
+document.getElementById('dash-metrics').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:1rem">מתחבר ל-Firebase...</div>';
+
+// ---- Stats / Charts ----
+let chartInstances = {};
+
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function mkChart(id, config) {
+  destroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return;
+  chartInstances[id] = new Chart(el.getContext('2d'), config);
+}
+
+function filterByPeriod(arr, dateField) {
+  const days = parseInt(document.getElementById('stats-period')?.value||'0');
+  if (!days || isNaN(days)) return arr;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+  return arr.filter(x => x[dateField] && new Date(x[dateField]) >= cutoff);
+}
+
+function renderStats() {
+  const fOrders = filterByPeriod(orders, 'date');
+  const fExp    = filterByPeriod(expenses, 'date');
+
+  // KPIs
+  const rev      = fOrders.filter(o=>o.payStatus==='שולם').reduce((s,o)=>s+(o.paid||0),0);
+  const totalExp = fExp.reduce((s,e)=>s+e.amount,0);
+  const netProfit = rev - totalExp;
+  const avgOrder  = fOrders.length ? Math.round(fOrders.reduce((s,o)=>s+(o.price||0),0)/fOrders.length) : 0;
+  const uniqueCustomers = new Set(fOrders.map(o=>o.name)).size;
+
+  document.getElementById('stats-kpis').innerHTML = `
+    <div class="metric-card accent"><div class="metric-label">הכנסות</div><div class="metric-value" style="font-size:15px">${fmtNIS(rev)}</div></div>
+    <div class="metric-card"><div class="metric-label">הוצאות</div><div class="metric-value" style="font-size:15px;color:var(--red)">${fmtNIS(totalExp)}</div></div>
+    <div class="metric-card"><div class="metric-label">רווח נקי</div><div class="metric-value" style="font-size:15px;color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtNIS(netProfit)}</div></div>
+    <div class="metric-card"><div class="metric-label">ממוצע הזמנה</div><div class="metric-value" style="font-size:15px">${fmtNIS(avgOrder)}</div></div>
+    <div class="metric-card"><div class="metric-label">לקוחות</div><div class="metric-value" style="font-size:15px">${uniqueCustomers}</div></div>
+  `;
+
+  const GREEN = '#1D9E75', AMBER = '#BA7517', RED = '#C0392B', BLUE = '#2563EB';
+  const PURPLE = '#7C3AED', TEAL = '#0891B2', CORAL = '#EA580C';
+  const gridColor = 'rgba(0,0,0,0.06)';
+  const textColor = '#6B6660';
+  const font = { family: 'Heebo, sans-serif', size: 11 };
+
+  // --- Chart 1: Revenue over time (monthly) ---
+  const revByMonth = {};
+  fOrders.filter(o=>o.payStatus==='שולם').forEach(o=>{
+    if(!o.date) return;
+    const m = o.date.slice(0,7);
+    revByMonth[m] = (revByMonth[m]||0) + (o.paid||0);
+  });
+  const revMonths = Object.keys(revByMonth).sort();
+  const heMonths = revMonths.map(m => {
+    const [y,mo] = m.split('-');
+    return new Date(+y,+mo-1,1).toLocaleDateString('he-IL',{month:'short',year:'2-digit'});
+  });
+  mkChart('chart-revenue', {
+    type: 'bar',
+    data: {
+      labels: heMonths,
+      datasets: [{
+        label: 'הכנסות',
+        data: revMonths.map(m=>revByMonth[m]),
+        backgroundColor: GREEN + 'CC',
+        borderColor: GREEN,
+        borderWidth: 1.5,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textColor, font }, grid: { display: false } },
+        y: { ticks: { color: textColor, font, callback: v=>'₪'+v.toLocaleString() }, grid: { color: gridColor } }
+      }
+    }
+  });
+
+  // --- Chart 2: Revenue vs Expenses by month ---
+  const expByMonth = {};
+  fExp.forEach(e => {
+    if(!e.date) return;
+    const m = e.date.slice(0,7);
+    expByMonth[m] = (expByMonth[m]||0) + e.amount;
+  });
+  const allMonths = [...new Set([...revMonths, ...Object.keys(expByMonth)])].sort();
+  const allHe = allMonths.map(m => {
+    const [y,mo] = m.split('-');
+    return new Date(+y,+mo-1,1).toLocaleDateString('he-IL',{month:'short',year:'2-digit'});
+  });
+  mkChart('chart-profit', {
+    type: 'bar',
+    data: {
+      labels: allHe,
+      datasets: [
+        { label: 'הכנסות', data: allMonths.map(m=>revByMonth[m]||0), backgroundColor: GREEN+'BB', borderRadius: 4 },
+        { label: 'הוצאות', data: allMonths.map(m=>expByMonth[m]||0), backgroundColor: RED+'BB', borderRadius: 4 },
+      ]
+    },
+    options: {
+      plugins: { legend: { labels: { color: textColor, font, boxWidth: 12 } } },
+      scales: {
+        x: { ticks: { color: textColor, font }, grid: { display: false } },
+        y: { ticks: { color: textColor, font, callback: v=>'₪'+v.toLocaleString() }, grid: { color: gridColor } }
+      }
+    }
+  });
+
+  // --- Chart 3: Order status donut ---
+  const statusCount = {};
+  fOrders.forEach(o => { statusCount[o.status] = (statusCount[o.status]||0)+1; });
+  const statusColors = { 'חדשה': BLUE, 'בתהליך': AMBER, 'הושלם': GREEN, 'בעבודה': PURPLE, 'נשלח': TEAL };
+  mkChart('chart-status', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusCount),
+      datasets: [{ data: Object.values(statusCount), backgroundColor: Object.keys(statusCount).map(s=>statusColors[s]||'#888'), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      cutout: '62%',
+      plugins: { legend: { position: 'bottom', labels: { color: textColor, font: {...font, size:9}, boxWidth: 8, padding: 4 } } }
+    }
+  });
+
+  // --- Chart 4: Expenses by category donut ---
+  const catTotals = {};
+  fExp.forEach(e => { catTotals[e.cat] = (catTotals[e.cat]||0) + e.amount; });
+  const catColors = [GREEN, BLUE, PURPLE, AMBER, CORAL, TEAL];
+  mkChart('chart-exp-cat', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(catTotals),
+      datasets: [{ data: Object.values(catTotals), backgroundColor: catColors, borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: textColor, font: {...font, size:9}, boxWidth: 8, padding: 4 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ₪${ctx.raw.toLocaleString()}` } }, legend: { position: 'bottom', labels: { color: textColor, font: {...font, size:9}, boxWidth: 8, padding: 4 } }
+      }
+    }
+  });
+
+  // --- Chart 5: Payment method ---
+  const payMethods = {};
+  fOrders.filter(o=>o.notes).forEach(o => {
+    const note = o.notes.trim();
+    if(['ביט','מזומן','פייבוקס','העברה'].some(p=>note.includes(p))) {
+      const method = ['ביט','מזומן','פייבוקס','העברה'].find(p=>note.includes(p));
+      payMethods[method] = (payMethods[method]||0) + (o.paid||0);
+    }
+  });
+  if(!Object.keys(payMethods).length) { payMethods['לא מצוין'] = fOrders.reduce((s,o)=>s+(o.paid||0),0); }
+  mkChart('chart-payment', {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(payMethods),
+      datasets: [{ data: Object.values(payMethods), backgroundColor: [BLUE, GREEN, AMBER, PURPLE, TEAL], borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { color: textColor, font: {...font, size:9}, boxWidth: 8, padding: 4 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ₪${ctx.raw.toLocaleString()}` } }, legend: { position: 'bottom', labels: { color: textColor, font: {...font, size:9}, boxWidth: 8, padding: 4 } }
+      }
+    }
+  });
+
+  // --- Chart 6: Top customers bar ---
+  const custRev = {};
+  fOrders.filter(o=>o.payStatus==='שולם').forEach(o => {
+    custRev[o.name] = (custRev[o.name]||0) + (o.paid||0);
+  });
+  const topCust = Object.entries(custRev).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mkChart('chart-customers', {
+    type: 'bar',
+    data: {
+      labels: topCust.map(c=>c[0]),
+      datasets: [{ data: topCust.map(c=>c[1]), backgroundColor: BLUE+'BB', borderColor: BLUE, borderWidth: 1.5, borderRadius: 6 }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textColor, font, callback: v=>'₪'+v.toLocaleString() }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor, font } , grid: { display: false } }
+      }
+    }
+  });
+
+  // --- Chart 7: Top products ---
+  const prodRev = {};
+  fOrders.filter(o=>o.payStatus==='שולם').forEach(o => {
+    const key = o.product.split('—')[0].split(' x')[0].trim().slice(0,25);
+    prodRev[key] = (prodRev[key]||0) + (o.paid||0);
+  });
+  const topProd = Object.entries(prodRev).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  mkChart('chart-products', {
+    type: 'bar',
+    data: {
+      labels: topProd.map(p=>p[0]),
+      datasets: [{ data: topProd.map(p=>p[1]), backgroundColor: PURPLE+'BB', borderColor: PURPLE, borderWidth: 1.5, borderRadius: 6 }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: textColor, font, callback: v=>'₪'+v.toLocaleString() }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor, font }, grid: { display: false } }
+      }
+    }
+  });
+}
+window.renderStats = renderStats;
+</script>
+</body>
+</html>
